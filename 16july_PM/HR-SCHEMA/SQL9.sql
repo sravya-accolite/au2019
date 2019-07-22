@@ -1,8 +1,6 @@
 
   
-        call getNewSalary(11,10,@new_sal);
-select @new_sal as New_Salary;
-
+        
 delimiter $$
 create procedure updateSal(IN empId int)
 BEGIN
