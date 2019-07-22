@@ -7,3 +7,5 @@ BEGIN
     select salary into curSalary from employee where employee_id=empId;
     select (curSalary+((hike*curSalary)/100)) into sal;
 END$$
+call getNewSalary(11,10,@new_sal);
+select @new_sal as New_Salary;
