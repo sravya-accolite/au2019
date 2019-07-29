@@ -1,2 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><!DOCTYPE web-app SYSTEM "systmId">
-<web-app><servlet><servlet-name>Sravya</servlet-name><servlet-class>class annotation.Mainclass</servlet-class></servlet><servlet-mapping><Servlet-name>Sravya</Servlet-name><url-pattern>c/program file</url-pattern></servlet-mapping></web-app>
