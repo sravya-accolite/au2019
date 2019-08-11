@@ -1,0 +1,189 @@
+package jbr.springmvc.controller;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import jbr.springmvc.model.User;
+import jbr.springmvc.service.UserService;
+
+@Controller
+public class RegistrationController {
+  @Autowired
+  public UserService userService;
+
+  @RequestMapping(value = "/register", method = RequestMethod.GET)
+  public ModelAndView showRegister(HttpServletRequest request, HttpServletResponse response) {
+    ModelAndView mav = new ModelAndView("register");
+    mav.addObject("user", new User());
+
+    return mav;
+  }
+
+  @RequestMapping(value = "/registerProcess", method = RequestMethod.POST)
+  public ModelAndView addUser(HttpServletRequest request, HttpServletResponse response,
+      @ModelAttribute("user") User user) {
+
+    userService.register(user);
+
+    return new ModelAndView("welcome", "firstname", user.getFirstname());
+  }
+  @RequestMapping("/logincheck")
+  public String logincheck(HttpServletRequest req,Model m)
+  {
+    String name = req.getParameter("username");
+    System.out.println(name);
+    String pass = req.getParameter("password");
+    List<User> userList;
+    String message;
+    userList = userdaoimp.getValidUsers(name);
+    System.out.println(userList.size());
+    message="welcome";
+    m.addAttribute("message",message);
+    if(userList.size()==0)
+    {
+      message="User does not exit!Register first!";
+      m.addAttribute("message",message);
+      System.out.println("User does not exit!Register first!");
+      return "register";
+    }
+    else 
+    {
+      for(User u: userList)
+      {
+        if(u.getPassword().equals(pass))
+        {
+
+          int errorCount = 0;
+          long cur= System.currentTimeMillis();
+          long wait=cur-u.getWaittime();
+          wait=(wait/1000)/60;
+          errorCount = u.getErrorC();
+          String status;
+          switch(errorCount)
+          {
+            case 3 : 
+                  if(wait<5)
+                  {
+                    long w=5-wait;
+                    message="Wait"+w+" minutes!";
+                    m.addAttribute("message", message);
+                    System.out.println(message);
+                    status="Waiting!";
+                    userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                    return "login";
+                  }
+                  else
+                  {
+                    status="Logged In!";
+                    message="Successfully Logged In!";
+                    m.addAttribute("message",message);
+                    userdaoimp.changeErrorandTime(getFirstName(),getPassword(),0,0);
+                    userdaoimp.deleteIfExists(getFirstName());
+                    userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                    status="Logged In!";
+                    return "loginresult";
+                  }
+            case 6 :
+                    if(wait<10)
+                    {
+                      status="Waiting!";
+                      long w=10-wait;
+                      message="Wait for "+w+" minutes!";
+                      m.addAttribute("message", message);
+                      System.out.println(message);
+                      userdaoimp.deleteIfExists(getFirstName());
+                      userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                      return "login";
+                    }
+                    else
+                    {
+                      message="Successfully Logged In!";
+                      m.addAttribute("message",message);
+                      userdaoimp.changeErrorandTime(getFirstName(),getPassword(),0,0);
+                      status="Logged In!";
+                      userdaoimp.deleteIfExists(getFirstName());
+                      userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                      return "loginresult";
+                    }
+            case 9 : 
+                  if(wait<20)
+                  {
+                    status="Waiting!";
+                    long w=20-wait;
+                    message="Wait"+w+" minutes!";
+                    m.addAttribute("message", message);
+                    System.out.println(message);
+                    userdaoimp.deleteIfExists(getFirstName());
+                    userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                    return "login";
+                  }
+                  else
+                  {
+                    message="Successfully Logged In!";
+                    m.addAttribute("message",message);
+                    userdaoimp.changeErrorandTime(getFirstName(),getPassword(),0,0);
+                    status="Logged In!";
+                    userdaoimp.deleteIfExists(getFirstName());
+                    userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                    return "loginresult";
+                  }
+            case 12 : status="User Invalid/Blocked!";
+            userdaoimp.deleteIfExists(u.getFirstName());
+                  userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                  userdaoimp.removeUser(getFirstName());
+                      break;
+            default: userdaoimp.changeErrorandTime(getFirstName(),getPassword(),0,0);
+                message="Successfully Logged In!";
+                status="Logged In!";
+                userdaoimp.deleteIfExists(getFirstName());
+                userdaoimp.createAdminView(getFirstName(),getEmail(),status);
+                m.addAttribute("message",message);
+                break;
+          }
+        }
+        else
+        {
+          System.out.println(getFirstName()+" "+getErrorC()+" "+getWaittime());
+          message="Password Error!Try LOGGING again!";
+          long curtime= System.currentTimeMillis();
+          m.addAttribute("message",message);
+          int curerr = userdaoimp.getError(name);
+          curerr += 1;
+          userdaoimp.updateError(name,curerr,curtime);
+        }
+      }
+      System.out.println("User found");
+    }
+    return "loginresult";
+  }
+  
+  @RequestMapping("/login")
+  public String adminView(HttpServletRequest req,Model m)
+  {
+    System.out.println("login ");
+    String name=req.getParameter("username");
+    String pass=req.getParameter("password");
+    int row=0;
+    if(name.equals("username") && pass.equals("password"))
+    {   
+        System.out.println("Logging in as Admin");
+        m.addAttribute("users",userdaoimp.viewUser());
+        return "view";
+    }
+    else
+      return "admin";
+  }
+  
+}
+
+
